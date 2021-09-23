@@ -3,8 +3,7 @@ Description=Assistant server daemon
 After=network.target
 
 [Service]
-EnvironmentFile=/home/assistant/config.yaml
-ExecStart=/home/assistant/assistant -c $OPTIONS
+ExecStart=/home/assistant/assistant -c config.toml
 ExecReload=/bin/kill -1 $MAINPID
 ExecStop=/bin/kill -2 $MAINPID
 Type=simple
