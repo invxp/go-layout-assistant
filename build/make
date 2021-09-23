@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#构建脚本
+
+APP_NAME=assistant
+APP_ROOT=`pwd`
+LIB_DIR=${APP_ROOT}/go
+
+APP_PREFIX=/home/${APP_NAME}
+
+export PATH=$PATH:${LIB_DIR}/bin
+export GOPATH=${LIB_DIR}
+
+echo wget Golang 1.17.1
+wget -O "go.tar.gz" "https://studygolang.com/dl/golang/go1.17.1.linux-amd64.tar.gz"
+tar -zxvf go.tar.gz
+
+cd ${APP_ROOT}
+echo Building project
+export GO111MODULE=on
+export GOPROXY=https://goproxy.cn
+
+go build -x -v -o ${APP_NAME} --ldflags="-s -w"
+
+echo Copy file to $RPM_BUILD_ROOT/${APP_PREFIX}
+mkdir -p $RPM_BUILD_ROOT/${APP_PREFIX}
+mv ${APP_NAME} $RPM_BUILD_ROOT/${APP_PREFIX}
+
+cp config/config.example.toml $RPM_BUILD_ROOT/${APP_PREFIX}/config.toml
+cp -r resource $RPM_BUILD_ROOT/${APP_PREFIX}/

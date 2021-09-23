@@ -1,0 +1,16 @@
+[Unit]
+Description=Assistant server daemon
+After=network.target
+
+[Service]
+EnvironmentFile=/home/assistant/config.yaml
+ExecStart=/home/assistant/assistant -c $OPTIONS
+ExecReload=/bin/kill -1 $MAINPID
+ExecStop=/bin/kill -2 $MAINPID
+Type=simple
+KillMode=process
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

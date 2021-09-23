@@ -1,0 +1,30 @@
+[HTTP]
+Enable = true
+Address = ":80"
+
+[Log]
+Enable = false
+Path = "logs"
+MaxAgeHours = 12
+MaxRotationSizeMegabytes = 200
+
+[MySQL]
+Enable = true
+Host   = "0.0.0.0:3306"
+Username = "mysql"
+Password = "mysql"
+Database = "mysql"
+MaxConnIdleTimeMinute = 10
+MaxConnLifeTimeMinute = 10
+MaxOpenConnections = 1000
+MaxIdleConnections = 100
+
+[Redis]
+Enable = true
+Host = "0.0.0.0:6379"
+Password = "redis"
+Database = 1
+MaxActive = 1000
+MaxIdle = 100
+MaxConnTimeoutSecond = 5
+MaxConnIdleTimeMinute = 10
