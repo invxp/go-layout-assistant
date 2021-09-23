@@ -5,8 +5,8 @@
 ```
 $ go get github.com/invxp/go-layout-assistant
 $ cd go-layout-assistant
-$ go build
-$ ./go-layout-assistant
+$ go build -o app cmd/assistant/main.go
+$ ./app
 ```
 ### 快速生成一个全新的Go应用(类似LNMP)
 1. 自带HTTPServer(gin)
