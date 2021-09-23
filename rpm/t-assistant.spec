@@ -19,7 +19,7 @@ AutoReqProv: none
 
 %define _prefix 		%{_dir}%{_nick}
 %define _systemd_dir   		/etc/systemd/system
-%define _systemd_file 		resource/%{_service}
+%define _systemd_file 		init/%{_service}
 
 BuildArch:noarch
 
