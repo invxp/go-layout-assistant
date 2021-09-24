@@ -59,6 +59,13 @@ func main() {
 	} else {
 		log.Printf("create service: %s success", serviceName)
 	}
+
+	if err := FixServiceCodes(serviceName, strings.Split(serviceName, "-")[len(strings.Split(serviceName, "-"))-1]); err != nil {
+		log.Printf("fix service code: %s failed: %v.%v", serviceName, err, os.RemoveAll(serviceName))
+	} else {
+		log.Printf("fix service code: %s success: %v", serviceName, os.RemoveAll(filepath.Join(serviceName, serviceName)))
+	}
+
 	os.Exit(0)
 }
 
@@ -120,7 +127,6 @@ func replaceFile(originFilename, serviceName, modPath, installDir string, replac
 	var write string
 
 	upperServiceName := strings.ToUpper(serviceName[:1]) + serviceName[1:]
-	lastServiceName := strings.Split(serviceName, "-")[len(strings.Split(serviceName, "-"))-1]
 
 	if dir := filepath.Dir(originFilename); dir != "." {
 		if replaceContent {
@@ -143,8 +149,52 @@ func replaceFile(originFilename, serviceName, modPath, installDir string, replac
 		write = strings.ReplaceAll(write, defaultInstallDir, installDir)
 		write = strings.ReplaceAll(write, defaultServiceNameLower, serviceName)
 		write = strings.ReplaceAll(write, defaultServiceNameUpper, upperServiceName)
-		originFilename = strings.ReplaceAll(originFilename, defaultServiceNameLower, lastServiceName)
+		originFilename = strings.ReplaceAll(originFilename, defaultServiceNameLower, serviceName)
 	}
 
 	return errors.Wrapf(ioutil.WriteFile(filepath.Join(serviceName, originFilename), convert.StringToByte(write), 0644), "create file: %s", filepath.Join(serviceName, originFilename))
+}
+
+//FixServiceCodes 修复带'-'符号的工程代码
+func FixServiceCodes(serviceName, fixedName string) error {
+	if serviceName == fixedName {
+		return nil
+	}
+
+	if err := os.MkdirAll(filepath.Join(serviceName, fixedName), 0644); err != nil {
+		return err
+	}
+
+	return filepath.WalkDir(serviceName, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+
+		if path == filepath.Join(serviceName, "cmd", serviceName, "main.go") {
+			return fixFile(path, path, serviceName, fixedName)
+		}
+
+		if strings.HasPrefix(path, filepath.Join(serviceName, serviceName)) {
+			return fixFile(path, filepath.Join(serviceName, fixedName, strings.ReplaceAll(strings.Split(path, string(os.PathSeparator))[len(strings.Split(path, string(os.PathSeparator)))-1], serviceName, fixedName)), serviceName, fixedName)
+		}
+
+		return err
+	})
+}
+
+func fixFile(originFilename, destFilename, serviceName, fixedName string) error {
+	read, err := ioutil.ReadFile(originFilename)
+	if err != nil {
+		return err
+	}
+
+	upperServiceName := strings.ToUpper(serviceName[:1]) + serviceName[1:]
+	upperFixedName := strings.ToUpper(fixedName[:1]) + fixedName[1:]
+
+	write := convert.ByteToString(read)
+
+	write = strings.ReplaceAll(convert.ByteToString(read), serviceName, fixedName)
+	write = strings.ReplaceAll(write, upperServiceName, upperFixedName)
+
+	return errors.Wrapf(ioutil.WriteFile(destFilename, convert.StringToByte(write), 0644), "create file: %s", filepath.Join(destFilename))
 }
