@@ -1,8 +1,8 @@
-Name: t-assistant
+Name: t-application
 Version:0.0.1
 Release: %(echo $RELEASE)%{?dist} 
-Summary: assistant
-Group: application
+Summary: application
+Group: devel
 License: GPL
 
 Requires(post): chkconfig
@@ -12,25 +12,24 @@ AutoReqProv: none
 
 %define _binaries_in_noarch_packages_terminate_build   0
 
-%define _nick   		assistant
-%define _dir			/home/
+%define _nick   		application
+%define _dir			/home/application
 %define _config		 	config.toml
 %define _service 		%{_nick}.service
 
-%define _prefix 		%{_dir}%{_nick}
-%define _systemd_dir   		/etc/systemd/system
-%define _systemd_file 		init/%{_service}
+%define _systemd_dir   	/etc/systemd/system
+%define _systemd_file 	init/%{_service}
 
 BuildArch:noarch
 
 %description
-assistant
+Application
 
 %prep
 
 %install
 
-mkdir -p ${RPM_BUILD_ROOT}%{_prefix}
+mkdir -p ${RPM_BUILD_ROOT}%{_dir}
 mkdir -p ${RPM_BUILD_ROOT}%{_systemd_dir}
 
 cd $OLDPWD
@@ -59,7 +58,7 @@ fi
 %defattr(-,root,root)
 
 %{_systemd_dir}/%{_service}
-%{_prefix}/%{_nick}
-%{_prefix}/resource/*
+%{_dir}/%{_nick}
+%{_dir}/resource/*
 
-%config(noreplace) %{_prefix}/%{_config}
+%config(noreplace) %{_dir}/%{_config}

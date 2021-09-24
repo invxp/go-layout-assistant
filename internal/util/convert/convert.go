@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"reflect"
+	"strings"
 	"unsafe"
 )
 
@@ -27,8 +28,15 @@ func StringToByte(src string) []byte {
 	return *(*[]byte)(unsafe.Pointer(&reflect.SliceHeader{Data: str.Data, Len: str.Len, Cap: str.Len}))
 }
 
-//ByteToString 注意 - 转换完毕的对象不可更改
+//ByteToString Byte转String
 func ByteToString(src []byte) string {
 	str := (*reflect.SliceHeader)(unsafe.Pointer(&src))
 	return *(*string)(unsafe.Pointer(&reflect.StringHeader{Data: str.Data, Len: str.Len}))
+}
+
+//OnlyASCIICharacters 检查输入是否全是ASCII字符
+func OnlyASCIICharacters(source string) bool {
+	return strings.IndexFunc(source, func(r rune) bool {
+		return r < 'A' || r > 'z'
+	}) == -1
 }

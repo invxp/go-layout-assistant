@@ -1,4 +1,4 @@
-package assistant
+package application
 
 import (
 	internal "github.com/invxp/go-layout-assistant/internal/http"
@@ -111,4 +111,12 @@ func TestHTTPGetCustomHeaderForAuth(t *testing.T) {
 		t.Fatal("auth success")
 	}
 	t.Log(err)
+}
+
+func TestHTTPPostCreateApplication(t *testing.T) {
+	resp, err := internal.Request(http.MethodPost, "http://localhost/api/create", internal.RequestPOSTCreate{ServiceName: "matrix", ModName: "gitlab.com/brink/matrix" /*InstallDir: "/root/matrix"*/}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(convert.ByteToString(resp.Data.Payload))
 }

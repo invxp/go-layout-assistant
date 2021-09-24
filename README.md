@@ -1,16 +1,15 @@
-# go-layout-assistant
-# 生成go标准应用框架库
+# Assistant
 
 ### 快速开始
 ```
 $ go get github.com/invxp/go-layout-assistant
 $ cd go-layout-assistant
 $ go build -o app cmd/assistant/main.go
-$ ./app
+$ ./assistant
 ```
 ### 快速生成一个全新的Go应用(类似LNMP)
 1. 自带HTTPServer(gin)
-2. 能够打包成RPM(CI/CD)
+2. 能够打包成RPM
 3. 能够注册成系统服务(CentOS-7)
 
 ### 你能学到
@@ -26,7 +25,7 @@ $ ./app
 5. 启动定时任务
 6. 等待应用退出
 
-### 买一送十
+### 买一送十(陆续添加与功能完善)
 #### 附赠各种工具类, 方便开发
 * HTTP-Client
 * 配置库(TOML)

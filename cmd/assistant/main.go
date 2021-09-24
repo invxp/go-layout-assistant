@@ -1,68 +1,150 @@
 package main
 
 import (
-	"flag"
-	"github.com/invxp/go-layout-assistant/assistant"
-	"github.com/invxp/go-layout-assistant/internal/util/config"
-	"github.com/invxp/go-layout-assistant/internal/util/daemon"
+	"fmt"
+	"github.com/invxp/go-layout-assistant/internal/util/convert"
+	"github.com/invxp/go-layout-assistant/internal/util/io"
+	"github.com/pkg/errors"
+	"io/fs"
+	"io/ioutil"
 	"log"
 	"os"
-	"os/signal"
+	"path/filepath"
+	"strings"
 )
 
 const (
-	version = "0.0.1-alpha"
-)
-const (
-	flagConfig    = "c"      //-c %{path} 自定义配置文件路径
-	flagDaemon    = "d"      //-d 是否后台启动
-	flagDaemonize = "daemon" //-daemon 使用者无需关注, 内部后台启动参数
+	defaultServiceNameLower = "application"
+	defaultServiceNameUpper = "Application"
+	defaultModPath          = "github.com/invxp/go-layout-assistant"
+	defaultInstallDir       = "/home/application"
 )
 
 var (
-	configFile   = flag.String(flagConfig, "config.toml", "set a config file")
-	enableDaemon = flag.Bool(flagDaemon, false, "run program in daemonize")
-	_            = flag.Int(flagDaemonize, 0, "daemonize pid flag")
+	blacklist = map[string]struct{}{
+		".git":          {},
+		".idea":         {},
+		"logs":          {},
+		"cmd/assistant": {}}
+
+	whitelist = map[string]struct{}{
+		"go.mod": {},
+		"go.sum": {}}
 )
 
-//waitQuit 阻塞等待应用退出(ctrl+c / kill)
-func waitQuit() {
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, os.Kill)
-	<-c
-	log.Printf("application exit")
-}
-
-//main 程序入口(尽量少做事)
-//1. 解析参数
-//2. 判断是否后台执行
-//3. 加载配置
-//4. 启动应用
-//5. 定时任务
-//6. 等待退出
 func main() {
-	flag.Parse()
+	var serviceName string
+	var modPath string
+	var installDir string
 
-	daemon.Daemonize(*enableDaemon, flagDaemon, flagDaemonize)
-
-	conf := &assistant.Config{}
-	config.MustLoad(*configFile, conf)
-
-	log.Println("load config success:", conf)
-
-	srv, err := assistant.New(
-		assistant.WithConfig(conf),
-		assistant.WithMySQLConfig(map[string]string{"timeout": "5s"}))
-
-	if err != nil {
-		log.Panic(err)
+	fmt.Printf("---input your service name(app)*: ")
+	_, _ = fmt.Scanln(&serviceName)
+	serviceName = strings.TrimSpace(serviceName)
+	if serviceName == "" {
+		log.Printf("create service name must be exist")
+		os.Exit(0)
 	}
 
-	log.Println("start program version", version)
+	fmt.Printf("---input your go mod path(github.com/invxp/fsm)*: ")
+	_, _ = fmt.Scanln(&modPath)
+	modPath = strings.TrimSpace(modPath)
+	if modPath == "" {
+		log.Printf("create mod path must be exist")
+		os.Exit(0)
+	}
+	fmt.Printf("---input %s install dir(/home/%s): ", serviceName, serviceName)
+	_, _ = fmt.Scanln(&installDir)
+	if err := CreateService(serviceName, modPath, installDir); err != nil {
+		log.Printf("create service: %s failed: %v", serviceName, err)
+	} else {
+		log.Printf("create service: %s success", serviceName)
+	}
+	os.Exit(0)
+}
 
-	go func() {
-		log.Println("http server close status:", srv.Serv())
-	}()
+//CreateService 克隆一个应用
+func CreateService(serviceName, modPath, installDir string) error {
+	if installDir == "" {
+		installDir = filepath.Join("/home", serviceName)
+	}
 
-	waitQuit()
+	err := os.RemoveAll(serviceName)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(serviceName, 0644)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("prepare create %s success, installDir: %s, modPath: %s", serviceName, installDir, modPath)
+
+	fullPath := io.FullPath()
+
+	return filepath.WalkDir(fullPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+
+		if strings.HasPrefix(path, filepath.Join(fullPath, serviceName)) {
+			log.Printf("skip self: %s from blacklist", path)
+			return err
+		}
+
+		for name := range blacklist {
+			if strings.HasPrefix(path, filepath.Join(fullPath, name)) {
+				log.Printf("skip path: %s from blacklist", path)
+				return err
+			}
+		}
+
+		path = strings.ReplaceAll(path, fullPath, "")
+
+		if dir := filepath.Dir(path); dir != "." {
+			return replaceFile(path, serviceName, modPath, installDir, true)
+		}
+
+		if _, exists := whitelist[path]; exists {
+			return replaceFile(path, serviceName, modPath, installDir, true)
+		} else {
+			log.Printf("skip file: %s from whitelist", path)
+		}
+
+		return err
+	})
+}
+
+//replaceFile 克隆文件+内容
+func replaceFile(originFilename, serviceName, modPath, installDir string, replaceContent bool) error {
+	var write string
+
+	upperServiceName := strings.ToUpper(serviceName[:1]) + serviceName[1:]
+	lastServiceName := strings.Split(serviceName, "-")[len(strings.Split(serviceName, "-"))-1]
+
+	if dir := filepath.Dir(originFilename); dir != "." {
+		if replaceContent {
+			dir = strings.ReplaceAll(dir, defaultServiceNameLower, serviceName)
+		}
+		if err := os.MkdirAll(filepath.Join(serviceName, dir), 0644); err != nil {
+			return err
+		}
+	}
+
+	read, err := ioutil.ReadFile(originFilename)
+	if err != nil {
+		return err
+	}
+
+	write = convert.ByteToString(read)
+
+	if replaceContent {
+		write = strings.ReplaceAll(convert.ByteToString(read), defaultModPath, modPath)
+		write = strings.ReplaceAll(write, defaultInstallDir, installDir)
+		write = strings.ReplaceAll(write, defaultServiceNameLower, serviceName)
+		write = strings.ReplaceAll(write, defaultServiceNameUpper, upperServiceName)
+		originFilename = strings.ReplaceAll(originFilename, defaultServiceNameLower, lastServiceName)
+	}
+
+	return errors.Wrapf(ioutil.WriteFile(filepath.Join(serviceName, originFilename), convert.StringToByte(write), 0644), "create file: %s", filepath.Join(serviceName, originFilename))
 }

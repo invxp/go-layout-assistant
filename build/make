@@ -2,11 +2,11 @@
 
 #构建脚本
 
-APP_NAME=assistant
+APP_NAME=application
+APP_PREFIX=/home/application
+
 APP_ROOT=`pwd`
 LIB_DIR=${APP_ROOT}/go
-
-APP_PREFIX=/home/${APP_NAME}
 
 export PATH=$PATH:${LIB_DIR}/bin
 export GOPATH=${LIB_DIR}
@@ -24,7 +24,7 @@ echo Building project
 export GO111MODULE=on
 export GOPROXY=https://goproxy.cn
 
-go build -x -v --ldflags="-s -w" -o _${APP_NAME}_ cmd/assistant/main.go
+go build -x -v --ldflags="-s -w" -o _${APP_NAME}_ cmd/application/main.go
 
 echo Copy file to $RPM_BUILD_ROOT/${APP_PREFIX}
 mkdir -p $RPM_BUILD_ROOT/${APP_PREFIX}

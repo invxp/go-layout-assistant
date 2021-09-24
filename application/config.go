@@ -1,4 +1,4 @@
-package assistant
+package application
 
 //defaultConfig 默认配置
 var defaultConfig = &Config{

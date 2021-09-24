@@ -21,7 +21,7 @@ const (
 	StatusCodeNotFound
 	StatusCodeAuthFailed
 
-	StatusCodeInvalidFormat = StatusCode(200000)
+	StatusCodeCreateServiceError = StatusCode(200000)
 
 	StatusCodeMySQLError = StatusCode(300000)
 
@@ -33,7 +33,8 @@ const (
 )
 
 const (
-	RouteCron = "cron"
+	RouteCron   = "cron"
+	RouteCreate = "create"
 )
 
 //Response HTTP统一回复结构
@@ -61,9 +62,22 @@ type RequestPOST struct {
 	Value []byte `json:"value,omitempty"`
 }
 
-//Failed 失败时通过panic终止代码
+//RequestPOSTCreate POST-Create请求(Body)
+type RequestPOSTCreate struct {
+	ServiceName string `json:"service_name" binding:"required" validate:"lowercase"`
+	ModName     string `json:"mod_name" binding:"required" validate:"lowercase"`
+	InstallDir  string `json:"install_dir,omitempty" validate:"omitempty,lowercase"`
+}
+
+//Failed Client请求失败(通过panic终止代码)
 func Failed(c *gin.Context, code StatusCode, description, messageID string) {
 	c.AbortWithStatusJSON(http.StatusBadRequest, Response{code, description, messageID, nil})
+	panic(nil)
+}
+
+//Fatal Server处理失败
+func Fatal(c *gin.Context, code StatusCode, err error, messageID string) {
+	c.AbortWithStatusJSON(http.StatusInternalServerError, Response{code, fmt.Sprintf("%v", err), messageID, nil})
 	panic(nil)
 }
 

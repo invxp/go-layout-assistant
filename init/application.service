@@ -1,9 +1,9 @@
 [Unit]
-Description=Assistant server daemon
+Description=application server daemon
 After=network.target
 
 [Service]
-ExecStart=/home/assistant/assistant -c config.toml
+ExecStart=/home/application/application -c config.toml
 ExecReload=/bin/kill -1 $MAINPID
 ExecStop=/bin/kill -2 $MAINPID
 Type=simple
