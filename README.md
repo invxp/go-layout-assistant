@@ -1,4 +1,4 @@
-# Assistant
+# Go-Layout-Assistant
 
 ### 快速开始
 ```
@@ -17,7 +17,7 @@ $ ./assistant
 2. 良好的编码风格与习惯
 3. Must/Options等常见Go设计模式
 
-### 关于main函数(应该做最少的事情)
+### 关于main函数(应该做该做的事情)
 1. 解析启动参数
 2. 判断是否后台执行
 3. 加载应用配置
