@@ -60,10 +60,13 @@ func main() {
 		log.Printf("create service: %s success", serviceName)
 	}
 
-	if err := FixServiceCodes(serviceName, strings.Split(serviceName, "-")[len(strings.Split(serviceName, "-"))-1]); err != nil {
-		log.Printf("fix service code: %s failed: %v.%v", serviceName, err, os.RemoveAll(serviceName))
-	} else {
-		log.Printf("fix service code: %s success: %v", serviceName, os.RemoveAll(filepath.Join(serviceName, serviceName)))
+	fixedName := strings.Split(serviceName, "-")[len(strings.Split(serviceName, "-"))-1]
+	if serviceName != fixedName {
+		if err := FixServiceCodes(serviceName, fixedName); err != nil {
+			log.Printf("fix service code: %s failed: %v.%v", serviceName, err, os.RemoveAll(serviceName))
+		} else {
+			log.Printf("fix service code: %s success: %v", serviceName, os.RemoveAll(filepath.Join(serviceName, serviceName)))
+		}
 	}
 
 	os.Exit(0)
