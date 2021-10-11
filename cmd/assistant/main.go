@@ -26,6 +26,7 @@ var (
 		".git":          {},
 		".idea":         {},
 		"logs":          {},
+		"vendor":		 {},
 		"cmd/assistant": {}}
 
 	whitelist = map[string]struct{}{
