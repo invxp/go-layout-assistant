@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -83,10 +84,7 @@ func CreateService(serviceName, modPath, installDir string) error {
 		return err
 	}
 
-	err = os.MkdirAll(serviceName, 0644)
-	if err != nil {
-		return err
-	}
+	mustMkdir(serviceName)
 
 	log.Printf("prepare create %s success, installDir: %s, modPath: %s", serviceName, installDir, modPath)
 
@@ -135,9 +133,7 @@ func replaceFile(originFilename, serviceName, modPath, installDir string, replac
 		if replaceContent {
 			dir = strings.ReplaceAll(dir, defaultServiceNameLower, serviceName)
 		}
-		if err := os.MkdirAll(filepath.Join(serviceName, dir), 0644); err != nil {
-			return err
-		}
+		mustMkdir(filepath.Join(serviceName, dir))
 	}
 
 	read, err := ioutil.ReadFile(originFilename)
@@ -164,9 +160,7 @@ func FixServiceCodes(serviceName, fixedName string) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Join(serviceName, fixedName), 0644); err != nil {
-		return err
-	}
+	mustMkdir(filepath.Join(serviceName, fixedName))
 
 	return filepath.WalkDir(serviceName, func(path string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -200,4 +194,15 @@ func fixFile(originFilename, destFilename, serviceName, fixedName string) error 
 	write = strings.ReplaceAll(write, upperServiceName, upperFixedName)
 
 	return errors.Wrapf(ioutil.WriteFile(destFilename, convert.StringToByte(write), 0644), "create file: %s", filepath.Join(destFilename))
+}
+
+func mustMkdir(dir string) {
+	dirPerm := os.FileMode(0644)
+	if runtime.GOOS == "darwin" {
+		dirPerm = 0755
+	}
+	err := os.MkdirAll(dir, dirPerm)
+	if err != nil {
+		panic(err)
+	}
 }
