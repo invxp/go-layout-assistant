@@ -14,8 +14,8 @@ export GOPATH=${LIB_DIR}
 if [ `command -v go` >/dev/null 2>&1 ] ; then
 echo `go version`
 else
-echo "wget Golang 1.17.1"
-wget -O "go.tar.gz" "https://studygolang.com/dl/golang/go1.17.1.linux-amd64.tar.gz" 
+echo "wget Golang 1.18.4"
+wget -O "go.tar.gz" "https://studygolang.com/dl/golang/go1.18.4.linux-amd64.tar.gz" 
 tar -zxvf "go.tar.gz"
 fi
 

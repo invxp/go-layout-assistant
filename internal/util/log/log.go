@@ -1,7 +1,6 @@
 package log
 
 import (
-	"github.com/lestrrat-go/file-rotatelogs"
 	"io"
 	"log"
 	"os"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
 /*
@@ -22,49 +23,47 @@ type Log struct {
 	mu  *sync.Mutex
 }
 
-func fullPath() (string, error) {
-	path, err := exec.LookPath(os.Args[0])
+func fullPath() string {
+	file, err := exec.LookPath(os.Args[0])
 	if err != nil {
-		return "", err
+		log.Panic(err)
 	}
 
-	path, err = filepath.Abs(path)
+	path, err := filepath.Abs(file)
 	if err != nil {
-		return "", err
+		log.Panic(err)
 	}
 
-	return path[0:strings.LastIndex(path, string(os.PathSeparator))] + string(os.PathSeparator), err
+	return path[0:strings.LastIndex(path, string(os.PathSeparator))] + string(os.PathSeparator)
 }
 
 //New 新建一个日志
-//pathName 				- 日志目录
 //fileName 				- 文件名称
 //maxAgeHours 			- 最大生命周期(小时)
 //maxFileSizeMegabytes  - 文件超过多大开始流转(MB)
-func New(pathName, fileName string, maxAgeHours, maxFileSizeMegabytes uint) (*Log, error) {
-	if !filepath.IsAbs(pathName) {
-		path, err := fullPath()
-		if err != nil {
-			return nil, err
-		}
-		pathName = filepath.Join(path, pathName)
+func New(fileName string, maxAgeHours, maxFileSizeMegabytes uint) (*Log, error) {
+	if !filepath.IsAbs(fileName) {
+		fileName = filepath.Join(fullPath(), fileName)
 	}
 
-	fullFilePathName := filepath.Join(pathName, fileName)
 	writer, err := rotatelogs.New(
-		fullFilePathName+".%Y-%m-%d_%H:%M",
-		rotatelogs.WithLinkName(fullFilePathName),
+		fileName+".%Y-%m-%d_%H:%M",
+		rotatelogs.WithLinkName(fileName),
 		rotatelogs.WithMaxAge(time.Duration(maxAgeHours)*time.Hour),
 		rotatelogs.WithRotationSize(int64(maxFileSizeMegabytes)*1024*1024),
 		rotatelogs.ForceNewFile(),
 	)
 
-	err = os.MkdirAll(pathName, 0644)
 	if err != nil {
 		return nil, err
 	}
 
-	logFile, err := os.OpenFile(fullFilePathName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	err = os.MkdirAll(filepath.Dir(fileName), 0755)
+	if err != nil {
+		return nil, err
+	}
+
+	logFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}

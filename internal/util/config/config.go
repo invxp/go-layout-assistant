@@ -1,12 +1,13 @@
 package config
 
 import (
-	"github.com/BurntSushi/toml"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
 )
 
 /*
@@ -28,15 +29,11 @@ func fullPath() string {
 	return path[0:strings.LastIndex(path, string(os.PathSeparator))] + string(os.PathSeparator)
 }
 
-//MustLoad 加载Config文件
-func MustLoad(fileName string, config interface{}) {
+//Load 加载Config文件
+func Load(fileName string, config interface{}) (err error) {
 	if !filepath.IsAbs(fileName) {
 		fileName = filepath.Join(fullPath(), fileName)
 	}
-
-	_, err := toml.DecodeFile(fileName, config)
-
-	if err != nil {
-		log.Panic(err)
-	}
+	_, err = toml.DecodeFile(fileName, config)
+	return
 }
